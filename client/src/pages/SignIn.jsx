@@ -1,11 +1,110 @@
-import React from 'react'
+import axios from "axios";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { z } from "zod";
+import {
+  signInStart,
+  signInSuccess,
+  signInFailure,
+} from "../redux/user/userSlice";
+import { useDispatch, useSelector } from "react-redux";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 function Signin() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { loading, error } = useSelector((state) => state.user);
+
+  const loginSchema = z.object({
+    email: z
+      .string()
+      .email("Invalid email address")
+      .min(1, "Email is required"),
+    password: z.string().min(1, "Password is required"),
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      dispatch(signInStart());
+      loginSchema.parse({
+        email,
+        password,
+      });
+      const res = await axios.post(API_URL + "/api/auth/signin", {
+        email,
+        password,
+      });
+      if (res.status !== 200) {
+        alert(res.data.message || "An error occurred");
+        dispatch(signInFailure(res.data.message));
+        return;
+      }
+      dispatch(signInSuccess(res.data));
+      setEmail("");
+      setPassword("");
+      navigate("/");
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        dispatch(signInFailure(error));
+        alert(error.errors.map((err) => err.message).join("\n"));
+      } else {
+        dispatch(signInFailure(error.response?.data?.message));
+        alert(error.response?.data?.message || "An error occurred");
+      }
+    }
+  };
+
   return (
-    <div>
-      haha
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-md w-96">
+        <h2 className="text-2xl font-bold mb-4">Sign In</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              className="block w-full rounded border-gray-300 p-2 focus:outline-none focus:border-blue-400"
+            />
+          </div>
+          <div className="mb-4">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="block w-full rounded border-gray-300 p-2 focus:outline-none focus:border-blue-400"
+            />
+          </div>
+          <button
+            type="submit"
+            className="bg-blue-500 text-white rounded w-full py-2"
+            disabled={loading}
+          >
+            {loading ? "Signing In..." : "Sign In"}
+          </button>
+        </form>
+        <div className="text-center mt-4">
+          <button className="bg-red-500 text-white rounded w-full py-2 mt-2">
+            Sign In with Google
+          </button>
+        </div>
+        <div className="mt-4 text-center">
+          <p>
+            Don't have an account?{" "}
+            <Link to="/sign-up" className="text-blue-500">
+              Sign Up
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
-  )
+  );
 }
 
-export default Signin
+export default Signin;

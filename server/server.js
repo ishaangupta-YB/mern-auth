@@ -7,15 +7,18 @@ const jwt = require('jsonwebtoken');
 
 const config = require("./config/config");
 const connectDB = require('./db/conn');
-const userRoutes = require('./routes/authRoutes')
-const authRoutes = require('./routes/userRoutes')
+const userRoutes = require('./routes/userRoutes')
+const authRoutes = require('./routes/authRoutes')
 
 const app = express()
 const PORT = config.port
 
 connectDB()
 
-app.use(cors())
+app.use(cors({
+    origin:  config.clientURL,
+    credentials: true,
+}));
 app.use(express.json());
 app.use(cookieParser());
 
