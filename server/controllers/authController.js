@@ -16,6 +16,11 @@ const loginSchema = z.object({
     email: z.string().email(),
     password: z.string().min(6),
 });
+const googleSchema = z.object({
+    name: z.string(),
+    email: z.string().email(),
+    profilePicture: z.string(),
+});
 
 exports.register = async (req, res, next) => {
     try {
@@ -73,6 +78,52 @@ exports.login = async (req, res, next) => {
         next(error)
     }
 };
+
+exports.google = async (req, res,next) => {
+    try {
+        console.log(req.body)
+        const { name, email, profilePicture } = googleSchema.parse(req.body);
+        const user = await User.findOne({ email });
+        if (user) {
+            const token = jwt.sign({ id: user._id }, config.jwtSecret);
+            const { password: hashedPassword, ...rest } = user._doc;
+            const expiryDate = new Date(Date.now() + 3600000);
+            return res
+                .cookie('access_token', token, {
+                    httpOnly: true,
+                    expires: expiryDate,
+                })
+                .status(200)
+                .json(rest);
+        }
+        
+        const generatedPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+        const hashedPassword = bcryptjs.hashSync(generatedPassword, 10);
+        const newUser = new User({
+            username: name.split(' ').join('').toLowerCase() + Math.random().toString(36).slice(-8),
+            email,
+            password: hashedPassword,
+            profilePicture: profilePicture,
+        });
+        await newUser.save();
+
+        const token = jwt.sign({ id: newUser._id }, config.jwtSecret);
+        const { password: hashedPassword2, ...rest } = newUser._doc;
+        const expiryDate = new Date(Date.now() + 3600000);
+        res
+            .cookie('access_token', token, {
+                httpOnly: true,
+                expires: expiryDate,
+            })
+            .status(200)
+            .json(rest);
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return next(errorHandler(400, error.errors.map(err => err.message)));
+        }
+        next(error);
+    }
+}
 
 exports.logout = (req, res) => {
     res.clearCookie('access_token').status(200).json('Signout success!');

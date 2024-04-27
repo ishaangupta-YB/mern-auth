@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
+import OAuth from "../redux/OAuth";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -41,7 +42,7 @@ function Signup() {
         email,
         password,
         confirmPassword,
-      }); 
+      });
       if (res.status !== 201) {
         alert(res.data.message || "An error occurred");
         return;
@@ -113,9 +114,7 @@ function Signup() {
           </button>
         </form>
         <div className="text-center mt-4">
-          <button className="bg-red-500 text-white rounded w-full py-2 mt-2">
-            Continue with Google
-          </button>
+          <OAuth/>
         </div>
         <div className="mt-4 text-center">
           <p>

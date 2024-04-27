@@ -8,6 +8,7 @@ import {
   signInFailure,
 } from "../redux/user/userSlice";
 import { useDispatch, useSelector } from "react-redux";
+import OAuth from "../redux/OAuth";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -90,9 +91,7 @@ function Signin() {
           </button>
         </form>
         <div className="text-center mt-4">
-          <button className="bg-red-500 text-white rounded w-full py-2 mt-2">
-            Sign In with Google
-          </button>
+          <OAuth/>
         </div>
         <div className="mt-4 text-center">
           <p>
