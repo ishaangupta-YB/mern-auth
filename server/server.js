@@ -1,9 +1,7 @@
 const express = require('express')
 const cookieParser = require('cookie-parser');
 const cors = require('cors')
-const rateLimit = require('express-rate-limit');
-const path = require('path')
-const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit'); 
 
 const config = require("./config/config");
 const connectDB = require('./db/conn');
