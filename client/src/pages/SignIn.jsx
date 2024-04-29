@@ -24,8 +24,30 @@ function Signin() {
       .string()
       .email("Invalid email address")
       .min(1, "Email is required"),
-    password: z.string().min(1, "Password is required"),
+    password: z
+      .string()
+      .min(6, "Password must be at least 6 characters")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
+        "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character"
+      ),
   });
+
+  const handleForgotPassword = async () => {
+    try {
+      loginSchema.pick({ email: true }).parse({ email });
+      const res = await axios.post(API_URL + "/api/reset/forgot-password", {
+        email,
+      });
+      alert(res.data?.message);
+    } catch (error) {
+      alert(
+        error instanceof z.ZodError
+          ? error.errors[0].message
+          : "An error occurred"
+      );
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -91,7 +113,15 @@ function Signin() {
           </button>
         </form>
         <div className="text-center mt-4">
-          <OAuth/>
+          <OAuth />
+        </div>
+        <div className="text-center mt-4">
+          <button
+            onClick={handleForgotPassword}
+            className="text-blue-500 hover:underline focus:outline-none"
+          >
+            Forgot Password?
+          </button>
         </div>
         <div className="mt-4 text-center">
           <p>

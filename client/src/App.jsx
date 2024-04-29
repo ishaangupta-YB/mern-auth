@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from 'axios'
+import axios from "axios";
 
 import Home from "./pages/Home";
 import About from "./pages/About";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Profile from "./pages/Profile";
+import NotFound from "./pages/NotFound";
+import ResetPassword from "./pages/ResetPassword";
 import Header from "./components/Header";
 import PrivateRoute from "./components/PrivateRoute";
 
@@ -14,10 +16,10 @@ const API_URL = import.meta.env.VITE_API_URL;
 function App() {
   axios.defaults.baseURL = API_URL;
   axios.defaults.withCredentials = true;
-  
+
   return (
     <BrowserRouter>
-    <Header />
+      <Header />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
@@ -26,9 +28,11 @@ function App() {
         <Route element={<PrivateRoute />}>
           <Route path="/profile" element={<Profile />} />
         </Route>
+        <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
-    </BrowserRouter> 
+    </BrowserRouter>
   );
-};
+}
 
 export default App;

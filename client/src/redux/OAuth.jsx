@@ -27,7 +27,6 @@ function OAuth() {
         photo: z.string().optional(),
       });
 
-      // loginSchema.parse({ name: displayName, email, photo: photoURL });
       const res = await axios.post(API_URL+"/api/auth/google", {
         name: displayName,
         email: email,
