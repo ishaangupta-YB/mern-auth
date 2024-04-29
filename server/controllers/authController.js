@@ -8,13 +8,19 @@ const z = require('zod');
 const registrationSchema = z.object({
     username: z.string().min(3).max(30),
     email: z.string().email(),
-    password: z.string().min(6),
+    password: z
+      .string()
+      .min(6, "Password must be at least 6 characters")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
+        "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character"
+      ),
     confirmPassword: z.string().min(6),
 });
 
 const loginSchema = z.object({
     email: z.string().email(),
-    password: z.string().min(6),
+    password: z.string().min(6, "Password must be at least 6 characters")
 });
 const googleSchema = z.object({
     name: z.string(),

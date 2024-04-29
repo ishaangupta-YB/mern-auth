@@ -6,7 +6,11 @@ const z = require('zod');
 const updateUserSchema = z.object({
     username: z.string().min(3).max(30).optional(),
     email: z.string().email().optional(),
-    password: z.string().min(6).optional(),
+    password: z.string().min(6, "Password must be at least 6 characters")
+        .regex(
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
+            "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character"
+        ).optional(),
     profilePicture: z.string().optional(),
 });
 
@@ -16,7 +20,7 @@ exports.updateUser = async (req, res, next) => {
     }
     try {
         const { username, email, password, profilePicture } = updateUserSchema.parse(req.body);
-        
+
         const existingUser = await User.findOne({ $and: [{ _id: { $ne: req.params.id } }, { $or: [{ username }, { email }] }] });
         if (existingUser) {
             const takenFields = [];

@@ -1,5 +1,5 @@
 const { mongoose } = require("mongoose");
- 
+
 const userSchema = new mongoose.Schema(
     {
         username: {
@@ -21,10 +21,20 @@ const userSchema = new mongoose.Schema(
             default:
                 'https://img.freepik.com/premium-vector/man-avatar-profile-picture-vector-illustration_268834-538.jpg',
         },
+        resetToken: String,
+        resetTokenExpiration: Date,
     },
     { timestamps: true }
 );
 
+userSchema.pre('save', function(next) {
+    if (this.resetTokenExpiration && this.resetTokenExpiration < Date.now()) {
+        this.resetToken = undefined;
+        this.resetTokenExpiration = undefined;
+    }
+    next();
+});
+
 const User = mongoose.model('User', userSchema);
 
-module.exports= User;
+module.exports = User;

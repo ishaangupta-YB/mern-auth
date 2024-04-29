@@ -1,12 +1,13 @@
 const express = require('express')
 const cookieParser = require('cookie-parser');
 const cors = require('cors')
-const rateLimit = require('express-rate-limit'); 
+const rateLimit = require('express-rate-limit');
 
 const config = require("./config/config");
 const connectDB = require('./db/conn');
 const userRoutes = require('./routes/userRoutes')
 const authRoutes = require('./routes/authRoutes')
+const resetRoutes = require('./routes/resetRoutes')
 
 const app = express()
 const PORT = config.port
@@ -14,9 +15,10 @@ const PORT = config.port
 connectDB()
 
 app.use(cors({
-    origin:  config.clientURL,
+    origin: config.clientURL,
     credentials: true,
-}));
+})); 
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -26,6 +28,7 @@ app.use(cookieParser());
 
 app.use('/api/user', userRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/reset', resetRoutes);
 
 app.use((err, req, res, next) => {
     const statusCode = err.statusCode || 500;
