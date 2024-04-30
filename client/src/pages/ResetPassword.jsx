@@ -5,17 +5,12 @@ import { z } from "zod";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-// const rateLimiter = new RateLimiter.RateLimiter({
-//   points: 10,
-//   duration: 60,
-// });
-
 function ResetPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const { resetToken } = useParams();
   const navigate = useNavigate();
-  const [resetTokenValid, setResetTokenValid] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const resetPasswordSchema = z.object({
     password: z
@@ -33,16 +28,17 @@ function ResetPassword() {
   useEffect(() => {
     const checkResetToken = async () => {
       try {
+        setLoading(true);
         const res = await axios.get(
           `${API_URL}/api/reset/validate-reset-token/${resetToken}`
         );
         if (!res || res.status !== 200) {
           navigate("/404");
-        } else {
-          setResetTokenValid(true);
         }
       } catch (error) {
         navigate("/404");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -53,19 +49,15 @@ function ResetPassword() {
     e.preventDefault();
 
     try {
-      // const isRateLimited = await rateLimiter.consume(1);
-      // if (isRateLimited) {
-      //   alert("Too many requests. Please try again later.");
-      // }
-
+      setLoading(true);
       resetPasswordSchema.parse({ password, confirmPassword });
-      console.log(password,confirmPassword)
+      console.log(password, confirmPassword);
       const res = await axios.post(`${API_URL}/api/reset/reset-password`, {
         resetToken,
-        newPassword:password,
-      }); 
-      console.log(res);
+        newPassword: password,
+      });
       alert(res.data?.message);
+      navigate("/");
     } catch (error) {
       console.log(error);
       let errorMessage = "An error occurred";
@@ -75,41 +67,56 @@ function ResetPassword() {
         errorMessage = error.response.data.error;
       }
       alert(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h2 className="text-2xl font-bold mb-4">Reset Password</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="New Password"
-              className="block w-full rounded border-gray-300 p-2 focus:outline-none focus:border-blue-400"
-            />
+    <>
+      {loading && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-5 rounded-md">
+            <div className="text-lg font-semibold">Loading...</div>
           </div>
-          <div className="mb-4">
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm New Password"
-              className="block w-full rounded border-gray-300 p-2 focus:outline-none focus:border-blue-400"
-            />
-          </div>
-          <button
-            type="submit"
-            className="bg-blue-500 text-white rounded w-full py-2"
-          >
-            Reset Password
-          </button>
-        </form>
+        </div>
+      )}
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="bg-white p-8 rounded-lg shadow-md w-96">
+          <h2 className="text-2xl font-bold mb-4">Reset Password</h2>
+          {!loading && (
+            <>
+              <form onSubmit={handleSubmit}>
+                <div className="mb-4">
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="New Password"
+                    className="block w-full rounded border-gray-300 p-2 focus:outline-none focus:border-blue-400"
+                  />
+                </div>
+                <div className="mb-4">
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm New Password"
+                    className="block w-full rounded border-gray-300 p-2 focus:outline-none focus:border-blue-400"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white rounded w-full py-2"
+                >
+                  Reset Password
+                </button>
+              </form>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
