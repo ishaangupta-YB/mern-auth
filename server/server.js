@@ -35,9 +35,6 @@ app.use(xss());
 app.use(mongoSanitize());
 app.use(cookieParser());
 
-// app.get('*', (req, res) => {
-//     res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
-// });
 
 app.use('/api/user', userRoutes);
 app.use('/api/auth', authRoutes);
@@ -51,6 +48,10 @@ app.use((err, req, res, next) => {
         message,
         statusCode,
     });
+});
+
+app.use((req, res, next) => {
+    res.status(404).json({ success: false, message: 'Not Found' });
 });
 
 const deleteExpiredResetTokens = async () => {

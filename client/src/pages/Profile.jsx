@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { useRef, useCallback,useState, useEffect } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import {
   getDownloadURL,
   getStorage,
@@ -15,19 +15,32 @@ import {
   deleteUserStart,
   deleteUserSuccess,
   deleteUserFailure,
+  signOut
 } from "../redux/user/userSlice";
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
+const MAX_IMAGE_SIZE = import.meta.env.VITE_MAX_IMAGE_SIZE;
+
+const Alert = ({ message, type }) => (
+  <div
+    className={`p-3 rounded-md mt-5 ${
+      type === "success"
+        ? "bg-green-100 text-green-700"
+        : "bg-red-100 text-red-700"
+    }`}
+  >
+    {message}
+  </div>
+);
 
 function Profile() {
   const dispatch = useDispatch();
   const fileRef = useRef(null);
-  const [image, setImage] = useState(undefined);
   const [imagePercent, setImagePercent] = useState(0);
   const [imageError, setImageError] = useState(false);
   const [formData, setFormData] = useState({});
-  const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [alert, setAlert] = useState(null);
 
   const { currentUser, loading, error } = useSelector((state) => state.user);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,18 +51,22 @@ function Profile() {
     }
   }, [currentUser]);
 
-  useEffect(() => {
-    if (image) {
-      handleFileUpload(image);
-    }
-  }, [image]);
-
   const handleFileUpload = useCallback(
-    async (e) => {
+    async (file) => {
+      if (!file) return;
+      if (file.size > MAX_IMAGE_SIZE) {
+        setAlert({
+          message: `Image size should be less than ${
+            MAX_IMAGE_SIZE / (1024 * 1024)
+          } MB`,
+          type: "error",
+        });
+        return;
+      }
       const storage = getStorage(app);
-      const fileName = new Date().getTime() + image.name;
+      const fileName = new Date().getTime() + file.name;
       const storageRef = ref(storage, fileName);
-      const uploadTask = uploadBytesResumable(storageRef, image);
+      const uploadTask = uploadBytesResumable(storageRef, file);
       setIsLoading(true);
       uploadTask.on(
         "state_changed",
@@ -61,7 +78,11 @@ function Profile() {
         (error) => {
           setImageError(true);
           setIsLoading(false);
-          alert("Error uploading image. Please try again.");
+          setAlert({
+            message: "Error uploading image. Please try again.",
+            type: "error",
+          });
+          // alert("Error uploading image. Please try again.");
         },
         () => {
           getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) =>
@@ -78,20 +99,24 @@ function Profile() {
     e.preventDefault();
     try {
       setIsLoading(true);
-      dispatch(updateUserStart());
+      dispatch(updateUserStart()); 
       const response = await axios.post(
         API_URL + `/api/user/update/${currentUser._id}`,
         formData
       );
       if (response.status !== 200) {
-        alert("Failed to update user.");
+        // setAlert({ message: "Failed to update user.", type: "error" });
         throw new Error(response.data.message || "Failed to update user.");
       }
       dispatch(updateUserSuccess(response.data));
       setIsLoading(false);
-      setUpdateSuccess(true);
+      setAlert({ message: "User is updated successfully!", type: "success" });
     } catch (error) {
-      alert(error?.response?.data?.message || "An error occurred");
+      // alert(error?.response?.data?.message || "An error occurred");
+      setAlert({
+        message: error?.response?.data?.message || "An error occurred",
+        type: "error",
+      });
       dispatch(updateUserFailure(error.message));
       setIsLoading(false);
     } finally {
@@ -102,17 +127,27 @@ function Profile() {
   const handleDeleteAccount = async (e) => {
     try {
       dispatch(deleteUserStart());
-      const res = await axios.delete(`/api/user/delete/${currentUser._id}`);
-      const data = res.data;
-      if (data.status !== 200) {
-        alert("An error occurred");
-        dispatch(deleteUserFailure(data));
+      const res = await axios.delete(`/api/user/delete/${currentUser._id}`); 
+      console.log(res)
+      if (res.status !== 200) {
+        // alert("An error occurred");
+        setAlert({ message: "An error occurred", type: "error" });
+        dispatch(deleteUserFailure(res.data));
         return;
       }
-      dispatch(deleteUserSuccess(data));
+      dispatch(deleteUserSuccess(res.data)); 
+      navigate("/sign-in");
     } catch (error) {
-      alert("An error occurred");
+      // alert("An error occurred");
+      setAlert({ message: "An error occurred", type: "error" });
       dispatch(deleteUserFailure(error));
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      handleFileUpload(selectedFile);
     }
   };
 
@@ -132,7 +167,7 @@ function Profile() {
           ref={fileRef}
           hidden
           accept="image/*"
-          onChange={(e) => setImage(e.target.files[0])}
+          onChange={handleFileChange}
         />
         <img
           src={formData.profilePicture || currentUser.profilePicture}
@@ -188,9 +223,6 @@ function Profile() {
           Delete Account
         </span>
       </div>
-      <p className="text-green-700 mt-5">
-        {updateSuccess && "User is updated successfully!"}
-      </p>
       {isLoading && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-5 rounded-md">
@@ -198,6 +230,7 @@ function Profile() {
           </div>
         </div>
       )}
+      {alert && <Alert message={alert.message} type={alert.type} />}
     </div>
   );
 }

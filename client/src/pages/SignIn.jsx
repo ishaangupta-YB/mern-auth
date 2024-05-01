@@ -69,7 +69,7 @@ function Signin() {
       dispatch(signInSuccess(res.data));
       setEmail("");
       setPassword("");
-      navigate("/");
+      navigate("/profile");
     } catch (error) {
       if (error instanceof z.ZodError) {
         dispatch(signInFailure(error));
