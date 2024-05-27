@@ -3,6 +3,7 @@ const User = require("../models/user");
 const errorHandler = require('../utils/errorHandler')
 const z = require('zod');
 
+
 const updateUserSchema = z.object({
     username: z.string().min(3).max(30).optional(),
     email: z.string().email().optional(),
